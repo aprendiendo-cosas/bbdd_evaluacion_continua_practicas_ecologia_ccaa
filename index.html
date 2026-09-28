@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Evaluación Continua - Prácticas de Ecología</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --primary: #0f766e;
+      --primary-hover: #115e59;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --danger: #be123c;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 32px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-top: 0;
+      color: var(--primary);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 12px;
+    }
+    fieldset {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      background-color: #ffffff;
+    }
+    legend {
+      font-weight: 600;
+      color: var(--text);
+      padding: 0 8px;
+      font-size: 0.95rem;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+    select, input[type="text"], input[type="url"], textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+      color: var(--text);
+      background-color: #fff;
+    }
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    .char-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 2px;
+    }
+    .evidencia-card {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .btn-remove-evidencia {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      width: 100%;
+      font-size: 1rem;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: var(--text);
+    }
+    .btn-secondary:hover {
+      background-color: #cbd5e1;
+    }
+    #status-msg {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 4px;
+      display: none;
+      font-weight: 500;
+    }
+    .msg-success { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .msg-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .loading {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Prácticas de Ecología — Evaluación Continua</h1>
+
+  <form id="eval-form">
+    <!-- BLOQUE 1: CONTEXTO -->
+    <fieldset>
+      <legend>1. Datos de la Sesión</legend>
+      
+      <div class="form-group">
+        <label for="select-estudiante">Estudiante:</label>
+        <select id="select-estudiante" required>
+          <option value="">Cargando estudiantes...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="select-practica">Práctica:</label>
+        <select id="select-practica" required disabled>
+          <option value="">Selecciona práctica...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="select-sesion">Sesión:</label>
+        <select id="select-sesion" required disabled>
+          <option value="">Selecciona práctica primero...</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <!-- BLOQUE 2: PREGUNTAS ACTIVAS (DINÁMICAS) -->
+    <fieldset id="fs-preguntas" style="display: none;">
+      <legend>2. Reflexión de la Práctica</legend>
+      <div id="preguntas-container"></div>
+    </fieldset>
+
+    <!-- BLOQUE 3: EVIDENCIAS (GRUPO REPETIBLE) -->
+    <fieldset id="fs-evidencias" style="display: none;">
+      <legend>3. Evidencias del Trabajo Realizado</legend>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">
+        Puedes registrar varias evidencias si completaste diferentes tareas o entregables en esta sesión.
+      </p>
+      <div id="evidencias-container"></div>
+      <button type="button" class="btn btn-secondary" id="btn-add-evidencia">+ Añadir evidencia</button>
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary" id="btn-submit" style="display: none;">Enviar evaluación</button>
+  </form>
+
+  <div id="status-msg"></div>
+</div>
+
+<script>
+  let cachePreguntasActivas = [];
+
+  window.addEventListener('DOMContentLoaded', () => {
+    google.script.run
+      .withSuccessHandler(inicializarSelects)
+      .withFailureHandler(err => mostrarMensaje(err.message, false))
+      .obtenerDatosIniciales();
+
+    document.getElementById('select-practica').addEventListener('change', alCambiarPractica);
+    document.getElementById('select-sesion').addEventListener('change', alCambiarSesion);
+    document.getElementById('btn-add-evidencia').addEventListener('click', agregarBloqueEvidencia);
+    document.getElementById('eval-form').addEventListener('submit', manejarEnvio);
+  });
+
+  function inicializarSelects(datos) {
+    const selEst = document.getElementById('select-estudiante');
+    selEst.innerHTML = '<option value="">-- Selecciona tu nombre --</option>';
+    datos.estudiantes.forEach(est => {
+      const opt = document.createElement('option');
+      opt.value = est.nie;
+      opt.textContent = est.nombre;
+      selEst.appendChild(opt);
+    });
+
+    const selPrac = document.getElementById('select-practica');
+    selPrac.innerHTML = '<option value="">-- Selecciona la práctica --</option>';
+    datos.practicas.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.id + ' - ' + p.nombre;
+      selPrac.appendChild(opt);
+    });
+    selPrac.disabled = false;
+  }
+
+  function alCambiarPractica() {
+    const idPrac = document.getElementById('select-practica').value;
+    const selSes = document.getElementById('select-sesion');
+    ocultarBloquesDinamicos();
+
+    if (!idPrac) {
+      selSes.innerHTML = '<option value="">Selecciona práctica primero...</option>';
+      selSes.disabled = true;
+      return;
+    }
+
+    selSes.disabled = true;
+    selSes.innerHTML = '<option value="">Cargando sesiones...</option>';
+
+    google.script.run
+      .withSuccessHandler(sesiones => {
+        selSes.innerHTML = '<option value="">-- Selecciona sesión --</option>';
+        sesiones.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = 'Sesión ' + s;
+          selSes.appendChild(opt);
+        });
+        selSes.disabled = false;
+      })
+      .withFailureHandler(err => mostrarMensaje(err.message, false))
+      .obtenerSesionesPorPractica(idPrac);
+  }
+
+  function alCambiarSesion() {
+    const idPrac = document.getElementById('select-practica').value;
+    const ses = document.getElementById('select-sesion').value;
+    
+    if (!idPrac || !ses) {
+      ocultarBloquesDinamicos();
+      return;
+    }
+
+    const container = document.getElementById('preguntas-container');
+    container.innerHTML = '<p class="loading">Buscando preguntas activas para esta sesión...</p>';
+    document.getElementById('fs-preguntas').style.display = 'block';
+
+    google.script.run
+      .withSuccessHandler(renderizarPreguntas)
+      .withFailureHandler(err => mostrarMensaje(err.message, false))
+      .obtenerEnunciadosActivos(idPrac, ses);
+  }
+
+  function renderizarPreguntas(enunciados) {
+    const container = document.getElementById('preguntas-container');
+    container.innerHTML = '';
+    cachePreguntasActivas = enunciados;
+
+    if (enunciados.length === 0) {
+      container.innerHTML = '<p class="loading">No hay preguntas activas registradas para esta sesión.</p>';
+    } else {
+      enunciados.forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        div.innerHTML = '<label for="resp_' + e.id_enunciado + '">' + e.enunciado + '</label>' +
+          '<textarea id="resp_' + e.id_enunciado + '" data-id="' + e.id_enunciado + '" required></textarea>';
+        container.appendChild(div);
+      });
+    }
+
+    document.getElementById('fs-evidencias').style.display = 'block';
+    document.getElementById('btn-submit').style.display = 'block';
+
+    const contEv = document.getElementById('evidencias-container');
+    if (contEv.children.length === 0) {
+      agregarBloqueEvidencia();
+    }
+  }
+
+  function ocultarBloquesDinamicos() {
+    document.getElementById('fs-preguntas').style.display = 'none';
+    document.getElementById('fs-evidencias').style.display = 'none';
+    document.getElementById('btn-submit').style.display = 'none';
+    cachePreguntasActivas = [];
+  }
+
+  function agregarBloqueEvidencia() {
+    const container = document.getElementById('evidencias-container');
+    const index = container.children.length;
+
+    const div = document.createElement('div');
+    div.className = 'evidencia-card';
+    div.innerHTML = (index > 0 ? '<button type="button" class="btn-remove-evidencia" onclick="this.parentElement.remove()">Eliminar</button>' : '') +
+      '<div class="form-group"><label>Nombre de la evidencia:</label><input type="text" class="ev-nombre" placeholder="Ej. Script de limpieza en R, Mapa NDVI"></div>' +
+      '<div class="form-group"><label>Descripción detallada de la evidencia (máx. 500 caracteres):</label><textarea class="ev-desc" maxlength="500" oninput="actualizarContador(this)"></textarea><div class="char-count"><span>0</span>/500</div></div>' +
+      '<div class="form-group"><label>Subir archivo de la evidencia (opcional):</label><input type="file" class="ev-file"></div>' +
+      '<div class="form-group"><label>URL (opcional):</label><input type="url" class="ev-url" placeholder="https://github.com/..."></div>';
+    container.appendChild(div);
+  }
+
+  function actualizarContador(textarea) {
+    const countSpan = textarea.parentElement.querySelector('.char-count span');
+    countSpan.textContent = textarea.value.length;
+  }
+
+  async function manejarEnvio(e) {
+    e.preventDefault();
+    const btnSubmit = document.getElementById('btn-submit');
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Enviando respuestas...';
+
+    const respuestas = [];
+    cachePreguntasActivas.forEach(p => {
+      const el = document.getElementById('resp_' + p.id_enunciado);
+      if (el) {
+        respuestas.push({
+          id_enunciado: p.id_enunciado,
+          respuesta_larga: el.value.trim()
+        });
+      }
+    });
+
+    const cards = document.querySelectorAll('.evidencia-card');
+    const evidencias = [];
+
+    for (const card of cards) {
+      const nombre = card.querySelector('.ev-nombre').value.trim();
+      const desc = card.querySelector('.ev-desc').value.trim();
+      const url = card.querySelector('.ev-url').value.trim();
+      const fileInput = card.querySelector('.ev-file');
+      
+      let archivoData = null;
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const base64 = await leerArchivoComoBase64(file);
+        archivoData = {
+          nombre: file.name,
+          tipo: file.type,
+          data: base64
+        };
+      }
+
+      if (nombre || desc || url || archivoData) {
+        evidencias.push({
+          nombre: nombre,
+          descripcion: desc,
+          url: url,
+          archivo: archivoData
+        });
+      }
+    }
+
+    const payload = {
+      nie: document.getElementById('select-estudiante').value,
+      idPractica: document.getElementById('select-practica').value,
+      sesion: document.getElementById('select-sesion').value,
+      respuestas: respuestas,
+      evidencias: evidencias
+    };
+
+    google.script.run
+      .withSuccessHandler(res => {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Enviar evaluación';
+        if (res.exito || res.success) {
+          mostrarMensaje(res.mensaje || "Registro completado con éxito.", true);
+          document.getElementById('eval-form').reset();
+          ocultarBloquesDinamicos();
+        } else {
+          mostrarMensaje("Error en el servidor: " + (res.mensaje || res.error), false);
+        }
+      })
+      .withFailureHandler(err => {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Enviar evaluación';
+        mostrarMensaje("Error de comunicación: " + err.message, false);
+      })
+      .procesarEnvio(payload);
+  }
+
+  function leerArchivoComoBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function mostrarMensaje(texto, esExito) {
+    const el = document.getElementById('status-msg');
+    el.className = esExito ? 'msg-success' : 'msg-error';
+    el.textContent = texto;
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
